@@ -1,0 +1,44 @@
+{
+ "version": 3,
+ "configurePresets": [
+ {
+ "name": "default",
+ "hidden": true,
+ "generator": "Ninja",
+ "binaryDir": "${sourceDir}/build/${presetName}",
+ "cacheVariables": {
+ "CMAKE_BUILD_TYPE": "Debug"
+ }
+ },
+ {
+ "name": "asan",
+ "displayName": "GCC/Clang avec ASan",
+ "description": "Включение AddressSanitizer и LeakSanitizer",
+ "inherits": "default",
+ "cacheVariables": {
+ "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer",
+ "CMAKE_C_FLAGS": "-fsanitize=address -fno-omit-frame-pointer"
+ }
+ },
+ {
+ "name": "ubsan",
+ "displayName": "GCC/Clang avec UBSan",
+ "description": "Включение UndefinedBehaviorSanitizer",
+ "inherits": "default",
+ "cacheVariables": {
+ "CMAKE_CXX_FLAGS": "-fsanitize=undefined",
+ "CMAKE_C_FLAGS": "-fsanitize=undefined"
+ }
+ }
+ ],
+ "buildPresets": [
+ {
+ "name": "asan",
+ "configurePreset": "asan"
+ },
+ {
+ "name": "ubsan",
+ "configurePreset": "ubsan"
+ }
+ ]
+}

@@ -1,0 +1,69 @@
+name: 'C++ CI'
+
+on:
+  push:
+    branches:
+      - main
+      - feature/github_actions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      # Ставим зависимости (Добавили ninja-build, так как без него пресеты упадут)
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install libboost-test-dev ninja-build -y
+
+      # === БЛОК ASAN ===
+      - name: Configure ASan
+        run: cmake --preset asan -DPATCH_VERSION=${{ github.run_number }}
+
+      # Изменили команду генерации пакета, чтобы CPack собирал его в правильной папке пресета
+      - name: Build ASan and Package
+        run: |
+          cmake --build --preset asan
+          cmake --build ./build/asan --target package || echo "CPack not configured yet"
+
+      - name: Run ASan Test
+        run: ./build/asan/main
+
+      # === БЛОК UBSAN ===
+      - name: Configure UBSan
+        run: cmake --preset ubsan
+
+      # Программа соберется и проверится в отдельной папке build/ubsan
+      - name: Build and Run UBSan Test
+        run: |
+          cmake --build --preset ubsan
+          ./build/ubsan/main
+
+      # === БЛОК СОЗДАНИЯ ПРЕРЕЛИЗА (Из методички) ===
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          draft: false
+          prerelease: true # Ваш пререлиз на месте!
+
+      # === БЛОК ЗАГРУЗКИ ПАКЕТА (Из методички) ===
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Робот заберет готовый .deb файл из папки сборки asan
+          asset_path: ./build/asan/helloworld-0.0.${{ github.run_number }}-Linux.deb
+          asset_name: helloworld-0.0.${{ github.run_number }}-Linux.deb
+          asset_content_type: application/vnd.debian.binary-package
