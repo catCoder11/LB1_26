@@ -27,7 +27,7 @@ jobs:
       # Изменили команду генерации пакета, чтобы CPack собирал его в правильной папке пресета
       - name: Build ASan and Package
         run: |
-          cmake --build --preset asan
+          cmake --build --preset asan 
           cmake --build ./build/asan --target package || echo "CPack not configured yet"
 
       - name: Run ASan Test
