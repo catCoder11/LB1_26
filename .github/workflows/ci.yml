@@ -47,27 +47,27 @@ jobs:
           cmake --build --preset ubsan
           ./build/ubsan/main
           
-      # # === БЛОК СОЗДАНИЯ ПРЕРЕЛИЗА (Из методички) ===
-      # - name: Create Release
-      #   id: create_release
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: ${{ github.run_number }}
-      #     release_name: Release ${{ github.run_number }}
-      #     draft: false
-      #     prerelease: true # Ваш пререлиз на месте!
+      # === БЛОК СОЗДАНИЯ ПРЕРЕЛИЗА (Из методички) ===
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          draft: false
+          prerelease: true # Ваш пререлиз на месте!
 
-      # # === БЛОК ЗАГРУЗКИ ПАКЕТА (Из методички) ===
-      # - name: Upload Release Asset
-      #   id: upload-release-asset
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     # Робот заберет готовый .deb файл из папки сборки asan
-      #     asset_path: ./build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb
-      #     asset_name: LB1_26-0.0.${{ github.run_number }}-Linux.deb
-      #     asset_content_type: application/vnd.debian.binary-package
+      # === БЛОК ЗАГРУЗКИ ПАКЕТА (Из методички) ===
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Робот заберет готовый .deb файл из папки сборки asan
+          asset_path: ./build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb
+          asset_name: LB1_26-0.0.${{ github.run_number }}-Linux.deb
+          asset_content_type: application/vnd.debian.binary-package
