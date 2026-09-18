@@ -32,7 +32,7 @@ jobs:
       
       - name: Rename DEB for compliant naming
         run: |
-          cp ./build/asan/LB1_26-0.1.1-Linux.deb ./build/asan/main-0.0.${{ github.run_number }}-Linux.deb
+          cp ./build/asan/main.dev ./build/asan/main-0.0.${{ github.run_number }}-Linux.deb
           
       - name: Run ASan Test
         run: ./build/asan/main
