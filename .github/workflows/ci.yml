@@ -27,12 +27,13 @@ jobs:
       # Изменили команду генерации пакета, чтобы CPack собирал его в правильной папке пресета
       - name: Build ASan and Package
         run: |
-          cmake --build --preset asan 
-          cmake --build ./build/asan --target package || echo "CPack not configured yet"
-      
-      - name: Rename DEB for compliant naming
+          cmake --build --preset asan
+          cmake --build ./build/asan --target package
+      - name: Prepare DEB
         run: |
-          cp ./build/asan/main.dev ./build/asan/main-0.0.${{ github.run_number }}-Linux.deb
+          DEB=$(find ./build/asan -maxdepth 1 -name '*.deb' -type f | head -n 1)
+          test -n "$DEB"
+          cp "$DEB" "./build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb"
           
       - name: Run ASan Test
         run: ./build/asan/main
@@ -67,7 +68,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          # Робот заберет готовый .deb файл из папки сборки asan
-          asset_path: /home/runner/work/LB1_26/LB1_26/build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb
+          asset_path: ./build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb
           asset_name: LB1_26-0.0.${{ github.run_number }}-Linux.deb
           asset_content_type: application/vnd.debian.binary-package
