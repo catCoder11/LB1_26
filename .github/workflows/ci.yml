@@ -142,6 +142,10 @@ jobs:
         with:
           submodules: true
 
+      - name: Install Ninja
+        shell: powershell
+        run: choco install ninja -y
+
       - name: Configure Windows Release
         run: cmake --preset windows-release
 
