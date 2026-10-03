@@ -27,19 +27,37 @@
  }
  },
  {
-  "name": "windows-release",
-  "displayName": "Windows Release",
-  "generator": "Ninja",
-  "binaryDir": "${sourceDir}/build/${presetName}",
-  "cacheVariables": {
-    "CMAKE_BUILD_TYPE": "Release"
-  }
-}
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+ {
+      "name": "windows-release",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      }
+    }
  ],
  "buildPresets": [
     {
         "name": "default",
         "configurePreset": "default"
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release"
+    },
+    {
+      "name": "windows-release",
+      "configurePreset": "windows-release",
+      "configuration": "Release"
     },
  {
  "name": "asan",
