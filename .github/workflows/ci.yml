@@ -1,3 +1,76 @@
+# name: 'C++ CI'
+
+# on:
+#   push:
+#     branches:
+#       - main
+#       - feature/github_actions
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     permissions: write-all
+
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           submodules: true
+
+#       # Ставим зависимости
+#       - name: Install Dependencies
+#         run: sudo apt-get update && sudo apt-get install libboost-test-dev ninja-build -y
+
+#       # === БЛОК ASAN ===
+#       - name: Configure ASan
+#         run: cmake --preset asan -DPATCH_VERSION=${{ github.run_number }}
+
+#       # Изменили команду генерации пакета, чтобы CPack собирал его в правильной папке пресета
+#       - name: Build ASan and Package
+#         run: |
+#           cmake --build --preset asan
+#           cmake --build ./build/asan --target package
+#       - name: Prepare DEB
+#         run: |
+#           DEB=$(find ./build/asan -maxdepth 1 -name '*.deb' -type f | head -n 1)
+#           test -n "$DEB"
+#           cp "$DEB" "./build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb"
+          
+#       - name: Run ASan Test
+#         run: ./build/asan/main
+
+#       # === БЛОК UBSAN ===
+#       - name: Configure UBSan
+#         run: cmake --preset ubsan
+
+#       # Программа соберется и проверится в отдельной папке build/ubsan
+#       - name: Build and Run UBSan Test
+#         run: |
+#           cmake --build --preset ubsan
+#           ./build/ubsan/main
+          
+#       # === БЛОК СОЗДАНИЯ ПРЕРЕЛИЗА (Из методички) ===
+#       - name: Create Release
+#         id: create_release
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           tag_name: ${{ github.run_number }}
+#           release_name: Release ${{ github.run_number }}
+#           draft: false
+#           prerelease: true # Ваш пререлиз на месте!
+
+#       # === БЛОК ЗАГРУЗКИ ПАКЕТА (Из методички) ===
+#       - name: Upload Release Asset
+#         id: upload-release-asset
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{ steps.create_release.outputs.upload_url }}
+#           asset_path: ./build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb
+#           asset_name: LB1_26-0.0.${{ github.run_number }}-Linux.deb
+#           asset_content_type: application/vnd.debian.binary-package
 name: 'C++ CI'
 
 on:
@@ -7,48 +80,109 @@ on:
       - feature/github_actions
 
 jobs:
-  build:
+  linux:
     runs-on: ubuntu-latest
-    permissions: write-all
 
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
 
-      # Ставим зависимости
       - name: Install Dependencies
         run: sudo apt-get update && sudo apt-get install libboost-test-dev ninja-build -y
 
-      # === БЛОК ASAN ===
+      # ASan
       - name: Configure ASan
         run: cmake --preset asan -DPATCH_VERSION=${{ github.run_number }}
 
-      # Изменили команду генерации пакета, чтобы CPack собирал его в правильной папке пресета
-      - name: Build ASan and Package
-        run: |
-          cmake --build --preset asan
-          cmake --build ./build/asan --target package
-      - name: Prepare DEB
-        run: |
-          DEB=$(find ./build/asan -maxdepth 1 -name '*.deb' -type f | head -n 1)
-          test -n "$DEB"
-          cp "$DEB" "./build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb"
-          
+      - name: Build ASan
+        run: cmake --build --preset asan
+
       - name: Run ASan Test
         run: ./build/asan/main
 
-      # === БЛОК UBSAN ===
+      # UBSan
       - name: Configure UBSan
         run: cmake --preset ubsan
 
-      # Программа соберется и проверится в отдельной папке build/ubsan
-      - name: Build and Run UBSan Test
+      - name: Build UBSan
+        run: cmake --build --preset ubsan
+
+      - name: Run UBSan Test
+        run: ./build/ubsan/main
+
+      # Linux Release
+      - name: Configure Linux Release
+        run: cmake --preset linux-release -DPATCH_VERSION=${{ github.run_number }}
+
+      - name: Build Linux Release
+        run: cmake --build --preset linux-release
+
+      - name: Create DEB Package
+        run: cmake --build ./build/linux-release --target package
+
+      - name: Prepare DEB
         run: |
-          cmake --build --preset ubsan
-          ./build/ubsan/main
-          
-      # === БЛОК СОЗДАНИЯ ПРЕРЕЛИЗА (Из методички) ===
+          DEB=$(find ./build/linux-release -maxdepth 1 -name '*.deb' -type f | head -n 1)
+          test -n "$DEB"
+          cp "$DEB" "./build/linux-release/LB1_26-0.0.${{ github.run_number }}-Linux.deb"
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb
+          path: ./build/linux-release/LB1_26-0.0.${{ github.run_number }}-Linux.deb
+
+
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Configure Windows Release
+        run: cmake --preset windows-release
+
+      - name: Build Windows Release
+        run: cmake --build --preset windows-release
+
+      - name: Run Windows Test
+        run: ./build/windows-release/Release/main.exe
+
+      - name: Prepare Windows executable
+        run: |
+          Copy-Item .\build\windows-release\Release\main.exe .\build\windows-release\LB1_26-0.0.${{ github.run_number }}-Windows.exe
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: ./build/windows-release/LB1_26-0.0.${{ github.run_number }}-Windows.exe
+
+
+  release:
+    needs:
+      - linux
+      - windows
+
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-deb
+          path: ./release
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: ./release
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -58,16 +192,24 @@ jobs:
           tag_name: ${{ github.run_number }}
           release_name: Release ${{ github.run_number }}
           draft: false
-          prerelease: true # Ваш пререлиз на месте!
+          prerelease: true
 
-      # === БЛОК ЗАГРУЗКИ ПАКЕТА (Из методички) ===
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload Linux DEB
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/asan/LB1_26-0.0.${{ github.run_number }}-Linux.deb
+          asset_path: ./release/LB1_26-0.0.${{ github.run_number }}-Linux.deb
           asset_name: LB1_26-0.0.${{ github.run_number }}-Linux.deb
           asset_content_type: application/vnd.debian.binary-package
+
+      - name: Upload Windows EXE
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/LB1_26-0.0.${{ github.run_number }}-Windows.exe
+          asset_name: LB1_26-0.0.${{ github.run_number }}-Windows.exe
+          asset_content_type: application/vnd.microsoft.portable-executable

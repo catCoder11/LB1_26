@@ -25,7 +25,16 @@
  "CMAKE_CXX_FLAGS": "-fsanitize=undefined",
  "CMAKE_C_FLAGS": "-fsanitize=undefined"
  }
- }
+ },
+ {
+  "name": "windows-release",
+  "displayName": "Windows Release",
+  "generator": "Ninja",
+  "binaryDir": "${sourceDir}/build/${presetName}",
+  "cacheVariables": {
+    "CMAKE_BUILD_TYPE": "Release"
+  }
+}
  ],
  "buildPresets": [
     {
