@@ -153,11 +153,11 @@ jobs:
         run: cmake --build --preset windows-release
 
       - name: Run Windows Test
-        run: ./build/windows-release/Release/main.exe
+        run: .\build\windows-release\main.exe
 
       - name: Prepare Windows executable
         run: |
-          Copy-Item .\build\windows-release\Release\main.exe .\build\windows-release\LB1_26-0.0.${{ github.run_number }}-Windows.exe
+          Copy-Item .\build\windows-release\main.exe .\build\windows-release\LB1_26-0.0.${{ github.run_number }}-Windows.exe
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
